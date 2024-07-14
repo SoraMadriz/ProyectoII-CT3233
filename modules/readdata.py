@@ -1,7 +1,7 @@
 import numpy as np      #Dependencia de la estructura del programa
 import pandas as pd     #Dependencia de la lectura y escritura
 
-document = "data_io"
+document = "data_io2"
 path = "~/Documentos/USB/ProyectoII"
 
 #LECTURA DE HOJA DE CONFIGURACIONES
@@ -9,6 +9,8 @@ df_config = np.matrix(pd.read_excel(f'{path}/files/{document}.xlsx',sheet_name="
 
 #LECTURA DE HOJA DE BUS
 df_bus = np.matrix(pd.read_excel(f'{path}/files/{document}.xlsx',sheet_name="BUS"),dtype=object)
+#Modelo zip
+zip_matrix = df_bus[:,[-1,-2,-3]]
 #Ordenar la matrix bus
 mask = np.array(df_bus[:, 0] != 'OFF').flatten() #Identifica los buses apagados
 df_bus = df_bus[mask]                            #Elimina los buses apagados
@@ -34,6 +36,14 @@ mod = np.array(df_bus[:,3]).flatten()            #Modulo del voltaje
 ang = np.pi*(ang)/180                            #De grados a radianes
 df_bus[:,3] = [[i_mod*(np.cos(i_ang)+1j*np.sin(i_ang))] for i_mod,i_ang in zip(mod,ang)]
 df_bus = np.delete(df_bus,4,axis=1)
+#Nueva potencia según el modelo zip
+for locale,values_zip in enumerate(zip_matrix):
+    model_zip = np.array(values_zip).flatten()
+    if model_zip[0]=="-%":
+        continue
+    else:
+        df_bus[locale,6] = df_bus[locale,6]*(model_zip[0]*(abs(df_bus[locale,3])**2) + model_zip[1]*abs(df_bus[locale,3]) + model_zip[2])
+        df_bus[locale,7] = df_bus[locale,7]*(model_zip[0]*(abs(df_bus[locale,3])**2) + model_zip[1]*abs(df_bus[locale,3]) + model_zip[2])
 
 
 
